@@ -69,7 +69,7 @@ export default async function PostPage({ params }: { params: Promise<PageParams>
           </div>
         </article>
         <CommentList comments={comments} />
-        <CommentForm slug={slug} onSuccess={() => {}} />
+        <CommentForm slug={slug} />
       </main>
       <Footer />
     </>

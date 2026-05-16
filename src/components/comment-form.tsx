@@ -4,7 +4,7 @@ import { useState, FormEvent } from "react";
 
 interface CommentFormProps {
   slug: string;
-  onSuccess: () => void;
+  onSuccess?: () => void;
 }
 
 export function CommentForm({ slug, onSuccess }: CommentFormProps) {
@@ -32,7 +32,7 @@ export function CommentForm({ slug, onSuccess }: CommentFormProps) {
         setNickname("");
         setEmail("");
         setContent("");
-        onSuccess();
+        onSuccess?.();
       } else {
         setMessage(data.error || "提交失败");
       }
