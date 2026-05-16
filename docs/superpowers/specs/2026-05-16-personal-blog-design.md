@@ -138,6 +138,78 @@ Single-user personal blog with Markdown editing, comment moderation, visitor tra
 4. Row inserted into VisitLog
 5. Post `viewCount` incremented
 
+## Security
+
+### Credential & Session
+
+- Admin password hashed with **bcrypt** (stored in env var `ADMIN_PASSWORD_HASH`), never in database
+- `iron-session` cookie: `httpOnly`, `sameSite: "lax"`, `secure` (prod), strong 32-char+ seal password
+- Session expires after 7 days of inactivity
+
+### Rate Limiting
+
+| Endpoint | Limit | Rationale |
+|----------|-------|-----------|
+| `POST /api/auth/login` | 5 req / min / IP | Brute force prevention |
+| `POST /api/posts/[slug]/comments` | 3 req / min / IP | Spam prevention |
+| `POST /api/posts/[slug]/like` | 10 req / min / IP | Abuse prevention |
+| `POST /api/posts/[slug]/view` | 30 req / min / IP | View count manipulation |
+| All API routes | 100 req / min / IP | General DoS mitigation |
+
+Implementation: `@upstash/ratelimit` (backed by Vercel KV) or as fallback, in-memory `Map` with TTL (works within a single Vercel instance for a low-traffic blog).
+
+### XSS Prevention
+
+- **Comment content**: Strip all HTML tags server-side before storing. Plain text only.
+- **Nickname**: Strip HTML tags, max 50 chars.
+- **Email**: Validate format, never render as HTML or mailto link on page (admin only views it).
+- **Markdown rendering**: `react-markdown` by default does not render raw HTML. Additionally use `rehype-sanitize` to strip any HTML that slips through.
+- **Admin post editor**: Admin content trusted, but still rendered through `react-markdown` (no raw HTML execution).
+
+### CSRF
+
+- Next.js Server Actions have built-in CSRF protection via request header checks.
+- API routes used for public endpoints (comments, likes, views) are read-only from the user's perspective — they don't mutate admin state. The `sameSite: "lax"` cookie setting plus proper CORS headers suffice.
+
+### Input Validation (Zod)
+
+All user-facing inputs validated with Zod schemas:
+
+- **Login**: username 1-50 chars, password 8-100 chars
+- **Comment**: nickname 1-50 chars (no HTML), email valid format, content 1-2000 chars (plain text)
+- **Like**: postId valid UUID
+- **View**: postId valid UUID (or null for homepage)
+- **Post slug**: `/^[a-z0-9]+(?:-[a-z0-9]+)*$/`, max 100 chars
+- **Post create/edit**: title 1-200 chars, content 1-100000 chars (admin only, server-side validation)
+
+### SQL Injection
+
+Prisma ORM uses parameterized queries exclusively. No raw SQL. Safe by default.
+
+### HTTP Security Headers
+
+Set in `next.config.ts` headers:
+
+```
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Strict-Transport-Security: max-age=63072000
+Permissions-Policy: camera=(), microphone=(), geolocation=()
+```
+
+### Environment & Secrets
+
+- `.env` in `.gitignore` — never committed
+- `ADMIN_PASSWORD_HASH` and `SESSION_SECRET` never exposed to client (no `NEXT_PUBLIC_` prefix)
+- Neon DB connection string in env var only, with IP allowlist on Neon side
+- Vercel env vars set via dashboard for production
+
+### Dependency Security
+
+- `npm audit` as pre-commit check
+- Dependabot enabled on GitHub for automatic updates
+
 ## UI Design
 
 - **Aesthetic**: Editorial + modern minimal. Warm white base (#fafaf8), serif headings (Georgia), amber accent (#c77d2c), subtle grain texture
