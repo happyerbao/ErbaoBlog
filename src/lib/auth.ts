@@ -5,8 +5,16 @@ export interface SessionData {
   isLoggedIn: boolean;
 }
 
+const sessionPassword = process.env.NODE_ENV !== "production"
+  ? (process.env.SESSION_SECRET || "a-very-long-secret-at-least-32-chars-for-dev")
+  : process.env.SESSION_SECRET;
+
+if (!sessionPassword) {
+  throw new Error("SESSION_SECRET environment variable is required in production");
+}
+
 export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET || "a-very-long-secret-at-least-32-chars-for-dev",
+  password: sessionPassword,
   cookieName: "erbao-blog-session",
   cookieOptions: {
     httpOnly: true,
@@ -21,6 +29,10 @@ export async function getSession() {
 }
 
 export async function isAuthenticated(): Promise<boolean> {
-  const session = await getSession();
-  return session.isLoggedIn === true;
+  try {
+    const session = await getSession();
+    return session.isLoggedIn === true;
+  } catch {
+    return false;
+  }
 }
