@@ -3,6 +3,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import rehypeSanitize from "rehype-sanitize";
 
 interface MarkdownEditorProps {
@@ -70,7 +71,7 @@ export function MarkdownEditor({
         <div className="flex-1 p-5 border border-border rounded-lg bg-surface overflow-y-auto">
           <div className="text-xs text-text-muted uppercase tracking-widest mb-4">预览</div>
           <div className="prose prose-sm max-w-none font-sans text-text leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} rehypePlugins={[rehypeSanitize]}>
               {content || "*暂无内容*"}
             </ReactMarkdown>
           </div>

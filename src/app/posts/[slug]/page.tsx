@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import rehypeSanitize from "rehype-sanitize";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -60,7 +61,7 @@ export default async function PostPage({ params }: { params: Promise<PageParams>
             </div>
           </header>
           <div className="prose max-w-none text-[16px] text-text leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+            <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]} rehypePlugins={[rehypeSanitize]}>
               {post.content}
             </ReactMarkdown>
           </div>
