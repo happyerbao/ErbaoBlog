@@ -34,6 +34,8 @@ model Comment {
   ip        String
   createdAt DateTime @default(now())
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
 }
 
 model Like {
@@ -55,4 +57,6 @@ model VisitLog {
   geo       Json?
   createdAt DateTime @default(now())
   post      Post?    @relation(fields: [postId], references: [id], onDelete: SetNull)
+
+  @@index([postId])
 }
